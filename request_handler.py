@@ -94,7 +94,6 @@ class HandleRequests(BaseHTTPRequestHandler):
     # Here's a method on the class that overrides the parent's method.
     # It handles any POST request.
     def do_POST(self):
-        self._set_headers(201)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
 
@@ -111,16 +110,44 @@ class HandleRequests(BaseHTTPRequestHandler):
         # the orange squiggle, you'll define the create_animal
         # function next.
         if resource == "animals":
-            new_data = create_animal(post_body)
+            if "name" in post_body and "species" in post_body and "locationId" in post_body and "customerId" in post_body and "status" in post_body:
+                self._set_headers(201)
+                new_data = create_animal(post_body)
+            else:
+                self._set_headers(400)
+                new_data = {
+                    "message": f'{"name is required" if "name" not in post_body else ""} {"species is required" if "species" not in post_body else ""} {"locationId is required" if "locationId" not in post_body else ""} {"customerId is required" if "customerId" not in post_body else ""} {"status is required" if "status" not in post_body else ""}'
+                        }
 
         if resource == "customers":
-            new_data = create_customer(post_body)
+            if "full_name" in post_body and "email" in post_body:
+                self._set_headers(201)
+                new_data = create_customer(post_body)
+            else:
+                self._set_headers(400)
+                new_data = {
+                    "message": f'{"full_name is required" if "full_name" not in post_body else ""} {"email is required" if "email" not in post_body else ""}'
+                        }
 
         if resource == "employees":
-            new_data = create_employee(post_body)
+            if "name" in post_body and "address" in post_body and "locationId" in post_body:
+                self._set_headers(201)
+                new_data = create_employee(post_body)
+            else:
+                self._set_headers(400)
+                new_data = {
+                    "message": f'{"name is required" if "name" not in post_body else ""} {"address is required" if "address" not in post_body else ""} {"locationId is required" if "locationId" not in post_body else ""}'
+                        }
 
         if resource == "locations":
-            new_data = create_location(post_body)
+            if "name" in post_body and "address" in post_body:
+                self._set_headers(201)
+                new_data = create_location(post_body)
+            else:
+                self._set_headers(400)
+                new_data = {
+                    "message": f'{"name is required" if "name" not in post_body else ""} {"address is required" if "address" not in post_body else ""}'
+                        }
 
         # Encode the new animal and send in response
         self.wfile.write(json.dumps(new_data).encode())
