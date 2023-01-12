@@ -9,8 +9,13 @@ from views import create_animal, delete_animal, get_all_animals, get_single_anim
 
 
 class HandleRequests(BaseHTTPRequestHandler):
+    """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
+    """
 
     def parse_url(self, path):
+        # This is a Docstring it should be at the beginning of all classes and functions
+        # It gives a description of the class or function
+
         # Just like splitting a string in JavaScript. If the
         # path is "/animals/1", the resulting list will
         # have "" at index 0, "animals" at index 1, and "1"
@@ -30,17 +35,12 @@ class HandleRequests(BaseHTTPRequestHandler):
             pass  # Request had trailing slash: /animals/
 
         return (resource, id)  # This is a tuple
-    # This is a Docstring it should be at the beginning of all classes and functions
-    # It gives a description of the class or function
-    """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
-    """
 
     # Here's a class function
 
     # Here's a method on the class that overrides the parent's method.
     # It handles any GET request.
     def do_GET(self):
-        self._set_headers(200)
         response = {}  # Default response
 
         # Parse the URL and capture the tuple that is returned
@@ -50,10 +50,19 @@ class HandleRequests(BaseHTTPRequestHandler):
             if id is not None:
                 response = get_single_animal(id)
 
+                if response is not None:
+                    self._set_headers(200)
+
+                else:
+                    self._set_headers(404)
+                    response = {"message": f"Animal {id} is out of office"}
+                    
             else:
+                self._set_headers(200)
                 response = get_all_animals()
 
         elif resource == "locations":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_location(id)
 
@@ -61,6 +70,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 response = get_all_locations()
 
         elif resource == "employees":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_employee(id)
 
@@ -68,11 +78,16 @@ class HandleRequests(BaseHTTPRequestHandler):
                 response = get_all_employees()
 
         elif resource == "customers":
+            self._set_headers(200)
             if id is not None:
                 response = get_single_customer(id)
 
             else:
                 response = get_all_customers()
+
+        else:
+            self._set_headers(404)
+            response = ""
 
         self.wfile.write(json.dumps(response).encode())
 
