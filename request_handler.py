@@ -202,19 +202,21 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         # Set a 204 response code
-        self._set_headers(204)
-
+        
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
         # Delete a single animal from the list
         if resource == "animals":
+            self._set_headers(204)
             delete_animal(id)
         if resource == "customers":
-            delete_customer(id)
+            self._set_headers(405)
         if resource == "employees":
+            self._set_headers(204)
             delete_employee(id)
         if resource == "locations":
+            self._set_headers(204)
             delete_location(id)
 
         # Encode the new animal and send in response
