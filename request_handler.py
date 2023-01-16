@@ -6,11 +6,32 @@ from views import create_animal, delete_animal, get_all_animals, get_single_anim
 # For now, think of a class as a container for functions that
 # work together for a common purpose. In this case, that
 # common purpose is to respond to HTTP requests from a client.
+method_mapper = {
+    'animals': {'single': get_single_animal, 'all': get_all_animals},
+    'customers': {'single': get_single_customer, 'all': get_all_customers},
+    'employees': {'single': get_single_employee, 'all': get_all_employees},
+    'locations': {'single': get_single_location, 'all': get_all_locations}
+}
 
 
 class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
+
+    def get_all_or_single(self, resource, id):
+        if id is not None:
+            response = method_mapper[resource]["single"](id)
+
+            if response is not None:
+                self._set_headers(200)
+            else:
+                self._set_headers(404)
+                response = ''
+        else:
+            self._set_headers(200)
+            response = method_mapper[resource]["all"]()
+
+        return response
 
     def parse_url(self, path):
         # This is a Docstring it should be at the beginning of all classes and functions
@@ -41,55 +62,62 @@ class HandleRequests(BaseHTTPRequestHandler):
     # Here's a method on the class that overrides the parent's method.
     # It handles any GET request.
     def do_GET(self):
-        response = {}  # Default response
+        """Handles GET requests to the server """
 
-        # Parse the URL and capture the tuple that is returned
+        response = None
         (resource, id) = self.parse_url(self.path)
-
-        if resource == "animals":
-            if id is not None:
-                response = get_single_animal(id)
-
-                if response is not None:
-                    self._set_headers(200)
-
-                else:
-                    self._set_headers(404)
-                    response = {"message": f"Animal {id} is out of office"}
-                    
-            else:
-                self._set_headers(200)
-                response = get_all_animals()
-
-        elif resource == "locations":
-            self._set_headers(200)
-            if id is not None:
-                response = get_single_location(id)
-
-            else:
-                response = get_all_locations()
-
-        elif resource == "employees":
-            self._set_headers(200)
-            if id is not None:
-                response = get_single_employee(id)
-
-            else:
-                response = get_all_employees()
-
-        elif resource == "customers":
-            self._set_headers(200)
-            if id is not None:
-                response = get_single_customer(id)
-
-            else:
-                response = get_all_customers()
-
-        else:
-            self._set_headers(404)
-            response = ""
-
+        response = self.get_all_or_single(resource, id)
         self.wfile.write(json.dumps(response).encode())
+
+        # response = {}  # Default response
+
+        # # Parse the URL and capture the tuple that is returned
+        # (resource, id) = self.parse_url(self.path)
+
+        # if resource == "animals":
+        #     if id is not None:
+        #         response = get_single_animal(id)
+
+        #         if response is not None:
+        #             self._set_headers(200)
+
+        #         else:
+        #             self._set_headers(404)
+        #             response = {"message": f"Animal {id} is out of office"}
+
+        #     else:
+        #         self._set_headers(200)
+        #         response = get_all_animals()
+
+        # elif resource == "locations":
+        #     self._set_headers(200)
+        #     if id is not None:
+        #         response = get_single_location(id)
+
+        #     else:
+        #         response = get_all_locations()
+
+        # elif resource == "employees":
+        #     self._set_headers(200)
+        #     if id is not None:
+        #         response = get_single_employee(id)
+
+        #     else:
+        #         response = get_all_employees()
+
+        # elif resource == "customers":
+        #     self._set_headers(200)
+        #     if id is not None:
+        #         response = get_single_customer(id)
+
+        #     else:
+        #         response = get_all_customers()
+
+        # else:
+        #     self._set_headers(404)
+        #     response = ""
+
+        # self.wfile.write(json.dumps(response).encode())
 
     # Here's a method on the class that overrides the parent's method.
     # It handles any POST request.
@@ -117,7 +145,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 self._set_headers(400)
                 new_data = {
                     "message": f'{"name is required" if "name" not in post_body else ""} {"species is required" if "species" not in post_body else ""} {"locationId is required" if "locationId" not in post_body else ""} {"customerId is required" if "customerId" not in post_body else ""} {"status is required" if "status" not in post_body else ""}'
-                        }
+                }
 
         if resource == "customers":
             if "full_name" in post_body and "email" in post_body:
@@ -127,7 +155,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 self._set_headers(400)
                 new_data = {
                     "message": f'{"full_name is required" if "full_name" not in post_body else ""} {"email is required" if "email" not in post_body else ""}'
-                        }
+                }
 
         if resource == "employees":
             if "name" in post_body and "address" in post_body and "locationId" in post_body:
@@ -137,7 +165,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 self._set_headers(400)
                 new_data = {
                     "message": f'{"name is required" if "name" not in post_body else ""} {"address is required" if "address" not in post_body else ""} {"locationId is required" if "locationId" not in post_body else ""}'
-                        }
+                }
 
         if resource == "locations":
             if "name" in post_body and "address" in post_body:
@@ -147,7 +175,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 self._set_headers(400)
                 new_data = {
                     "message": f'{"name is required" if "name" not in post_body else ""} {"address is required" if "address" not in post_body else ""}'
-                        }
+                }
 
         # Encode the new animal and send in response
         self.wfile.write(json.dumps(new_data).encode())
@@ -202,7 +230,7 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         # Set a 204 response code
-        
+
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
