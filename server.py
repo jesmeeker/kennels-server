@@ -1,16 +1,16 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import all, retrieve, create_animal, delete_animal, get_all_animals, get_single_animal, create_location, delete_location, get_all_locations, get_single_location, create_employee, delete_employee, get_all_employees, get_single_employee, create_customer, delete_customer, get_all_customers, get_single_customer, update_animal, update_customer, update_employee, update_location
+from views import create_animal, delete_animal, get_all_animals, get_single_animal, create_location, delete_location, get_all_locations, get_single_location, create_employee, delete_employee, get_all_employees, get_single_employee, create_customer, delete_customer, get_all_customers, get_single_customer, update_animal, update_customer, update_employee, update_location
 
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
 # work together for a common purpose. In this case, that
 # common purpose is to respond to HTTP requests from a client.
 method_mapper = {
-    'single': retrieve, 'all': all
-    # 'customers': {'single': get_single_customer, 'all': get_all_customers},
-    # 'employees': {'single': get_single_employee, 'all': get_all_employees},
-    # 'locations': {'single': get_single_location, 'all': get_all_locations}
+    'animals': {'single': get_single_animal, 'all': get_all_animals},
+    'customers': {'single': get_single_customer, 'all': get_all_customers},
+    'employees': {'single': get_single_employee, 'all': get_all_employees},
+    'locations': {'single': get_single_location, 'all': get_all_locations}
 }
 
 
@@ -20,7 +20,7 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def get_all_or_single(self, resource, id):
         if id is not None:
-            response = method_mapper["single"](resource, id)
+            response = method_mapper[resource]["single"](id)
 
             if response is not None:
                 self._set_headers(200)
@@ -29,7 +29,7 @@ class HandleRequests(BaseHTTPRequestHandler):
                 response = ''
         else:
             self._set_headers(200)
-            response = method_mapper["all"](resource)
+            response = method_mapper[resource]["all"]()
 
         return response
 
