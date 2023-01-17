@@ -120,6 +120,17 @@ def update(resource, id, post_body):
             break
         
 
-def delete():
+def delete(resource, id):
     """For DELETE requests to a single resource"""
-    pass
+    resource_index = -1
+
+    # Iterate the ANIMALS list, but use enumerate() so that you
+    # can access the index value of each item
+    for index, item in enumerate(DATABASE[resource]):
+        if item["id"] == id:
+            # Found the animal. Store the current index.
+            resource_index = index
+
+    # If the animal was found, use pop(int) to remove it from list
+    if resource_index >= 0:
+        DATABASE[resource].pop(resource_index)
