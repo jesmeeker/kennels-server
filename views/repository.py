@@ -91,15 +91,34 @@ def retrieve(resource, id):
     return requested_resource
 
 
-def create():
+def create(resource, post_body):
     """For POST requests to a collection"""
-    pass
+    
+    # Get the id value of the last animal in the list
+    max_id = DATABASE[resource][-1]["id"]
+
+    # Add 1 to whatever that number is
+    new_id = max_id + 1
+
+    # Add an `id` property to the animal dictionary
+    post_body["id"] = new_id
+
+    # Add the animal dictionary to the list
+    DATABASE[resource].append(post_body)
+
+    # Return the dictionary with `id` property added
+    return post_body
 
 
-def update():
-    """For PUT requests to a single resource"""
-    pass
-
+def update(resource, id, post_body):
+    # Iterate the ANIMALS list, but use enumerate() so that
+    # you can access the index value of each item.
+    for index, item in enumerate(DATABASE[resource]):
+        if item["id"] == id:
+            # Found the animal. Update the value.
+            DATABASE[resource][index] = post_body
+            break
+        
 
 def delete():
     """For DELETE requests to a single resource"""

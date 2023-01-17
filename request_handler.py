@@ -1,6 +1,6 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import all, retrieve, create_animal, delete_animal, get_all_animals, get_single_animal, create_location, delete_location, get_all_locations, get_single_location, create_employee, delete_employee, get_all_employees, get_single_employee, create_customer, delete_customer, get_all_customers, get_single_customer, update_animal, update_customer, update_employee, update_location
+from views import all, retrieve, create, update, create_animal, delete_animal, get_all_animals, get_single_animal, create_location, delete_location, get_all_locations, get_single_location, create_employee, delete_employee, get_all_employees, get_single_employee, create_customer, delete_customer, get_all_customers, get_single_customer, update_animal, update_customer, update_employee, update_location
 
 # Here's a class. It inherits from another class.
 # For now, think of a class as a container for functions that
@@ -20,7 +20,7 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     def get_all_or_single(self, resource, id):
         if id is not None:
-            response = method_mapper["single"](resource, id)
+            response = method_mapper["single"](resource, id                                                                                                                                                     )
 
             if response is not None:
                 self._set_headers(200)
@@ -69,55 +69,6 @@ class HandleRequests(BaseHTTPRequestHandler):
         response = self.get_all_or_single(resource, id)
         self.wfile.write(json.dumps(response).encode())
 
-        # response = {}  # Default response
-
-        # # Parse the URL and capture the tuple that is returned
-        # (resource, id) = self.parse_url(self.path)
-
-        # if resource == "animals":
-        #     if id is not None:
-        #         response = get_single_animal(id)
-
-        #         if response is not None:
-        #             self._set_headers(200)
-
-        #         else:
-        #             self._set_headers(404)
-        #             response = {"message": f"Animal {id} is out of office"}
-
-        #     else:
-        #         self._set_headers(200)
-        #         response = get_all_animals()
-
-        # elif resource == "locations":
-        #     self._set_headers(200)
-        #     if id is not None:
-        #         response = get_single_location(id)
-
-        #     else:
-        #         response = get_all_locations()
-
-        # elif resource == "employees":
-        #     self._set_headers(200)
-        #     if id is not None:
-        #         response = get_single_employee(id)
-
-        #     else:
-        #         response = get_all_employees()
-
-        # elif resource == "customers":
-        #     self._set_headers(200)
-        #     if id is not None:
-        #         response = get_single_customer(id)
-
-        #     else:
-        #         response = get_all_customers()
-
-        # else:
-        #     self._set_headers(404)
-        #     response = ""
-
-        # self.wfile.write(json.dumps(response).encode())
 
     # Here's a method on the class that overrides the parent's method.
     # It handles any POST request.
@@ -134,13 +85,10 @@ class HandleRequests(BaseHTTPRequestHandler):
         # Initialize new animal
         new_data = None
 
-        # Add a new animal to the list. Don't worry about
-        # the orange squiggle, you'll define the create_animal
-        # function next.
         if resource == "animals":
             if "name" in post_body and "species" in post_body and "locationId" in post_body and "customerId" in post_body and "status" in post_body:
                 self._set_headers(201)
-                new_data = create_animal(post_body)
+                new_data = create(resource, post_body)
             else:
                 self._set_headers(400)
                 new_data = {
@@ -150,7 +98,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         if resource == "customers":
             if "full_name" in post_body and "email" in post_body:
                 self._set_headers(201)
-                new_data = create_customer(post_body)
+                new_data = create(resource, post_body)
             else:
                 self._set_headers(400)
                 new_data = {
@@ -160,7 +108,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         if resource == "employees":
             if "name" in post_body and "address" in post_body and "locationId" in post_body:
                 self._set_headers(201)
-                new_data = create_employee(post_body)
+                new_data = create(resource, post_body)
             else:
                 self._set_headers(400)
                 new_data = {
@@ -170,7 +118,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         if resource == "locations":
             if "name" in post_body and "address" in post_body:
                 self._set_headers(201)
-                new_data = create_location(post_body)
+                new_data = create(resource, post_body)
             else:
                 self._set_headers(400)
                 new_data = {
@@ -189,19 +137,11 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
-
-        # Delete a single animal from the list
-        if resource == "animals":
-            update_animal(id, post_body)
-        if resource == "customers":
-            update_customer(id, post_body)
-        if resource == "employees":
-            update_employee(id, post_body)
-        if resource == "locations":
-            update_location(id, post_body)
+        update(resource, id, post_body)
 
         # Encode the new animal and send in response
         self.wfile.write("".encode())
+
 
     def _set_headers(self, status):
         # Notice this Docstring also includes information about the arguments passed to the function
