@@ -1,11 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import all, retrieve, create, update, delete, create_animal, delete_animal, get_all_animals, get_single_animal, create_location, delete_location, get_all_locations, get_single_location, create_employee, delete_employee, get_all_employees, get_single_employee, create_customer, delete_customer, get_all_customers, get_single_customer, update_animal, update_customer, update_employee, update_location
+from views import all, retrieve, create, update, delete
 
-# Here's a class. It inherits from another class.
-# For now, think of a class as a container for functions that
-# work together for a common purpose. In this case, that
-# common purpose is to respond to HTTP requests from a client.
 method_mapper = {
     'single': retrieve, 'all': all
     # 'customers': {'single': get_single_customer, 'all': get_all_customers},
@@ -13,12 +9,19 @@ method_mapper = {
     # 'locations': {'single': get_single_location, 'all': get_all_locations}
 }
 
+# Here's a class. It inherits from another class.
+# For now, think of a class as a container for functions that
+# work together for a common purpose. In this case, that
+# common purpose is to respond to HTTP requests from a client.
+
 
 class HandleRequests(BaseHTTPRequestHandler):
     """Controls the functionality of any GET, PUT, POST, DELETE requests to the server
     """
 
     def get_all_or_single(self, resource, id):
+        """Determines whether the client is needing all items or a single item and then calls the correct function.
+        """
         if id is not None:
             response = method_mapper["single"](resource, id)
 
@@ -34,6 +37,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         return response
 
     def parse_url(self, path):
+        """Splits the URL into two variables"""
         # This is a Docstring it should be at the beginning of all classes and functions
         # It gives a description of the class or function
 
@@ -57,10 +61,6 @@ class HandleRequests(BaseHTTPRequestHandler):
 
         return (resource, id)  # This is a tuple
 
-    # Here's a class function
-
-    # Here's a method on the class that overrides the parent's method.
-    # It handles any GET request.
     def do_GET(self):
         """Handles GET requests to the server """
 
@@ -68,9 +68,6 @@ class HandleRequests(BaseHTTPRequestHandler):
         (resource, id) = self.parse_url(self.path)
         response = self.get_all_or_single(resource, id)
         self.wfile.write(json.dumps(response).encode())
-
-    # Here's a method on the class that overrides the parent's method.
-    # It handles any POST request.
 
     def do_POST(self):
         content_len = int(self.headers.get('content-length', 0))

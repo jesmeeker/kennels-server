@@ -119,7 +119,6 @@ def update(resource, id, post_body):
             DATABASE[resource][index] = post_body
             break
         
-
 def delete(resource, id):
     """For DELETE requests to a single resource"""
     resource_index = -1
