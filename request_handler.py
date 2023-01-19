@@ -64,7 +64,7 @@ class HandleRequests(BaseHTTPRequestHandler):
             response = None
             (resource, id) = parsed
             response = self.get_all_or_single(resource, id)
-        else: # There is a ? in the path, run the query param functions
+        else:  # There is a ? in the path, run the query param functions
             response = {}
             (resource, query) = parsed
 
@@ -145,17 +145,38 @@ class HandleRequests(BaseHTTPRequestHandler):
 
     # A method that handles any PUT request.
     def do_PUT(self):
-        self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
 
         # Parse the URL
         (resource, id) = self.parse_url(self.path)
-        update(resource, id, post_body)
 
-        # Encode the new animal and send in response
+        success = False
+        
+        if resource == "animals":
+            success = update(id, post_body)
+        # rest of the elif's
+
+        if success:
+            self._set_headers(204)
+        else:
+            self._set_headers(404)
+
         self.wfile.write("".encode())
+
+    # def do_PUT(self):
+    #     self._set_headers(204)
+    #     content_len = int(self.headers.get('content-length', 0))
+    #     post_body = self.rfile.read(content_len)
+    #     post_body = json.loads(post_body)
+
+    #     # Parse the URL
+    #     (resource, id) = self.parse_url(self.path)
+    #     update(resource, id, post_body)
+
+    #     # Encode the new animal and send in response
+    #     self.wfile.write("".encode())
 
     def _set_headers(self, status):
         # Notice this Docstring also includes information about the arguments passed to the function

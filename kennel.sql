@@ -69,3 +69,12 @@ SELECT
     a.password
 FROM customer a
 WHERE a.id = 1
+
+UPDATE Animal
+	SET
+		name = "Marley",
+		breed = "Unknown",
+		status = "Admitted",
+		location_id = 2,
+		customer_id = 2
+	WHERE id = 9

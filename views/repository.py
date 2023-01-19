@@ -343,6 +343,7 @@ def get_customer_by_email(email):
 
     return customers
 
+
 def get_animal_by_location(location_id):
     with sqlite3.connect("./kennel.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -371,6 +372,7 @@ def get_animal_by_location(location_id):
 
     return animals
 
+
 def get_animal_by_status(status):
     with sqlite3.connect("./kennel.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -398,6 +400,7 @@ def get_animal_by_status(status):
             animals.append(animal.__dict__)
 
     return animals
+
 
 def get_employee_by_location(location_id):
     with sqlite3.connect("./kennel.sqlite3") as conn:
@@ -445,27 +448,62 @@ def create(resource, post_body):
     return post_body
 
 
-def update(resource, id, post_body):
-    # Iterate the ANIMALS list, but use enumerate() so that
-    # you can access the index value of each item.
-    for index, item in enumerate(DATABASE[resource]):
-        if item["id"] == id:
-            # Found the animal. Update the value.
-            DATABASE[resource][index] = post_body
-            break
+def update(id, new_animal):
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
 
+        db_cursor.execute("""
+        UPDATE Animal
+            SET
+                name = ?,
+                breed = ?,
+                status = ?,
+                location_id = ?,
+                customer_id = ?
+        WHERE id = ?
+        """, (new_animal['name'], new_animal['breed'], new_animal['status'], new_animal['location_id'], new_animal['customer_id'], id, ))
+
+        # Were any rows affected?
+        # Did the client send an `id` that exists?
+        rows_affected = db_cursor.rowcount
+
+    if rows_affected == 0:
+        # Forces 404 response by main module
+        return False
+    else:
+        # Forces 204 response by main module
+        return True
+# def update(resource, id, post_body):
+#     # Iterate the ANIMALS list, but use enumerate() so that
+#     # you can access the index value of each item.
+#     for index, item in enumerate(DATABASE[resource]):
+#         if item["id"] == id:
+#             # Found the animal. Update the value.
+#             DATABASE[resource][index] = post_body
+#             break
+
+
+# def delete(resource, id):
+#     """For DELETE requests to a single resource"""
+#     resource_index = -1
+
+#     # Iterate the ANIMALS list, but use enumerate() so that you
+#     # can access the index value of each item
+#     for index, item in enumerate(DATABASE[resource]):
+#         if item["id"] == id:
+#             # Found the animal. Store the current index.
+#             resource_index = index
+
+#     # If the animal was found, use pop(int) to remove it from list
+#     if resource_index >= 0:
+#         DATABASE[resource].pop(resource_index)
 
 def delete(resource, id):
-    """For DELETE requests to a single resource"""
-    resource_index = -1
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
 
-    # Iterate the ANIMALS list, but use enumerate() so that you
-    # can access the index value of each item
-    for index, item in enumerate(DATABASE[resource]):
-        if item["id"] == id:
-            # Found the animal. Store the current index.
-            resource_index = index
-
-    # If the animal was found, use pop(int) to remove it from list
-    if resource_index >= 0:
-        DATABASE[resource].pop(resource_index)
+        if resource == 'animals':
+            db_cursor.execute("""
+            DELETE FROM animal
+            WHERE id = ?
+            """, (id, ))
