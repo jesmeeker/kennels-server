@@ -8,3 +8,4 @@ class Employee():
         self.full_name = name
         self.address = address
         self.location_id = location_id
+        self.location = None

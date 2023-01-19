@@ -76,8 +76,17 @@ def all(resource):
                 a.breed,
                 a.status,
                 a.location_id,
-                a.customer_id
-            FROM animal a
+                a.customer_id,
+                l.name location_name,
+                l.address location_address,
+                c.name customer_name,
+                c.address customer_address,
+                c.email customer_email
+            FROM Animal a
+            JOIN Location l 
+                ON l.id = a.location_id
+            JOIN Customer c
+                ON c.id = a.customer_id
             """)
 
             # Initialize an empty list to hold all animal representations
@@ -93,10 +102,22 @@ def all(resource):
                 # Note that the database fields are specified in
                 # exact order of the parameters defined in the
                 # Animal class above.
-                animal = Animal(row['id'], row['name'], row['breed'],
-                                row['status'], row['location_id'],
-                                row['customer_id'])
+                animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
 
+                # Create a Location instance from the current row
+                location = Location(
+                    row['id'], row['location_name'], row['location_address'])
+
+                # Add the dictionary representation of the location to the animal
+                animal.location = location.__dict__
+
+                # Create a Customer instance from the current row
+                customer = Customer(
+                    row['id'], row['customer_name'], row['customer_address'], row['customer_email'])
+
+                # Add the dictionary representation of the location to the animal
+                animal.customer = customer.__dict__
+                # Add the dictionary representation of the animal to the list
                 animals.append(animal.__dict__)
 
             return animals
@@ -138,8 +159,12 @@ def all(resource):
                 a.id,
                 a.name,
                 a.address,
-                a.location_id
+                a.location_id,
+                l.name location_name,
+                l.address location_address
             FROM employee a
+            JOIN location l
+                ON a.location_id = l.id
             """)
 
             # Initialize an empty list to hold all animal representations
@@ -159,6 +184,12 @@ def all(resource):
                     row['id'], row['name'], row['address'], row['location_id'])
 
                 employees.append(employee.__dict__)
+
+                location = Location(
+                    row['id'], row['location_name'], row['location_address'])
+
+                # Add the dictionary representation of the location to the animal
+                employee.location = location.__dict__
 
             return employees
 
@@ -428,24 +459,48 @@ def get_employee_by_location(location_id):
 
     return employees
 
+def create(resource, new_animal):
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
+        if resource == 'animals':
+            db_cursor.execute("""
+            INSERT INTO Animal
+                ( name, breed, status, location_id, customer_id )
+            VALUES
+                ( ?, ?, ?, ?, ?);
+            """, (new_animal['name'], new_animal['breed'],
+                new_animal['status'], new_animal['location_id'],
+                new_animal['customer_id'], ))
 
-def create(resource, post_body):
-    """For POST requests to a collection"""
+            # The `lastrowid` property on the cursor will return
+            # the primary key of the last thing that got added to
+            # the database.
+            id = db_cursor.lastrowid
 
-    # Get the id value of the last animal in the list
-    max_id = DATABASE[resource][-1]["id"]
+            # Add the `id` property to the animal dictionary that
+            # was sent by the client so that the client sees the
+            # primary key in the response.
+            new_animal['id'] = id
 
-    # Add 1 to whatever that number is
-    new_id = max_id + 1
 
-    # Add an `id` property to the animal dictionary
-    post_body["id"] = new_id
+            return new_animal
+# def create(resource, post_body):
+#     """For POST requests to a collection"""
 
-    # Add the animal dictionary to the list
-    DATABASE[resource].append(post_body)
+#     # Get the id value of the last animal in the list
+#     max_id = DATABASE[resource][-1]["id"]
 
-    # Return the dictionary with `id` property added
-    return post_body
+#     # Add 1 to whatever that number is
+#     new_id = max_id + 1
+
+#     # Add an `id` property to the animal dictionary
+#     post_body["id"] = new_id
+
+#     # Add the animal dictionary to the list
+#     DATABASE[resource].append(post_body)
+
+#     # Return the dictionary with `id` property added
+#     return post_body
 
 
 def update(id, new_animal):

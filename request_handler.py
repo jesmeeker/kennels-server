@@ -101,7 +101,7 @@ class HandleRequests(BaseHTTPRequestHandler):
         new_data = None
 
         if resource == "animals":
-            if "name" in post_body and "species" in post_body and "locationId" in post_body and "customerId" in post_body and "status" in post_body:
+            if "name" in post_body and "breed" in post_body and "location_id" in post_body and "customer_id" in post_body and "status" in post_body:
                 self._set_headers(201)
                 new_data = create(resource, post_body)
             else:
