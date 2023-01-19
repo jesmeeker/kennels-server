@@ -125,7 +125,8 @@ def all(resource):
                 # Note that the database fields are specified in
                 # exact order of the parameters defined in the
                 # Animal class above.
-                customer = Customer(row['id'], row['name'], row['address'], row['email'], row['password'])
+                customer = Customer(
+                    row['id'], row['name'], row['address'], row['email'], row['password'])
 
                 customers.append(customer.__dict__)
 
@@ -154,12 +155,13 @@ def all(resource):
                 # Note that the database fields are specified in
                 # exact order of the parameters defined in the
                 # Animal class above.
-                employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
+                employee = Employee(
+                    row['id'], row['name'], row['address'], row['location_id'])
 
                 employees.append(employee.__dict__)
 
             return employees
-        
+
         if resource == 'locations':
             db_cursor.execute("""
             SELECT
@@ -311,6 +313,117 @@ def retrieve(resource, id):
 #             del requested_resource["customerId"]
 
 #     return requested_resource
+
+
+def get_customer_by_email(email):
+
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        select
+            c.id,
+            c.name,
+            c.address,
+            c.email,
+            c.password
+        from Customer c
+        WHERE c.email = ?
+        """, (email, ))
+
+        customers = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            customer = Customer(
+                row['id'], row['name'], row['address'], row['email'], row['password'])
+            customers.append(customer.__dict__)
+
+    return customers
+
+def get_animal_by_location(location_id):
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        FROM animal a
+        WHERE a.location_id = ?
+        """, (location_id, ))
+
+        animals = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            animal = Animal(
+                row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
+            animals.append(animal.__dict__)
+
+    return animals
+
+def get_animal_by_status(status):
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.breed,
+            a.status,
+            a.location_id,
+            a.customer_id
+        FROM animal a
+        WHERE a.status = ?
+        """, (status, ))
+
+        animals = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            animal = Animal(
+                row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
+            animals.append(animal.__dict__)
+
+    return animals
+
+def get_employee_by_location(location_id):
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        # Write the SQL query to get the information you want
+        db_cursor.execute("""
+        SELECT
+            a.id,
+            a.name,
+            a.address,
+            a.location_id
+        FROM employee a
+        WHERE a.location_id = ?
+        """, (location_id, ))
+
+        employees = []
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            employee = Employee(
+                row['id'], row['name'], row['address'], row['location_id'])
+            employees.append(employee.__dict__)
+
+    return employees
 
 
 def create(resource, post_body):

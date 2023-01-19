@@ -1,6 +1,8 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from views import all, retrieve, create, update, delete
+from views import all, retrieve, create, update, delete, get_customer_by_email, get_animal_by_location, get_employee_by_location, get_animal_by_status
+from urllib.parse import urlparse, parse_qs
+
 
 method_mapper = {
     'single': retrieve, 'all': all
@@ -37,36 +39,52 @@ class HandleRequests(BaseHTTPRequestHandler):
         return response
 
     def parse_url(self, path):
-        """Splits the URL into two variables"""
-        # This is a Docstring it should be at the beginning of all classes and functions
-        # It gives a description of the class or function
-
-        # Just like splitting a string in JavaScript. If the
-        # path is "/animals/1", the resulting list will
-        # have "" at index 0, "animals" at index 1, and "1"
-        # at index 2.
-        path_params = path.split("/")
+        """Parse the url into the resource and id"""
+        parsed_url = urlparse(path)
+        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
         resource = path_params[1]
-        id = None
 
-        # Try to get the item at index 2
+        if parsed_url.query:
+            query = parse_qs(parsed_url.query)
+            return (resource, query)
+
+        pk = None
         try:
-            # Convert the string "1" to the integer 1
-            # This is the new parseInt()
-            id = int(path_params[2])
-        except IndexError:
-            pass  # No route parameter exists: /animals
-        except ValueError:
-            pass  # Request had trailing slash: /animals/
-
-        return (resource, id)  # This is a tuple
+            pk = int(path_params[2])
+        except (IndexError, ValueError):
+            pass
+        return (resource, pk)
 
     def do_GET(self):
         """Handles GET requests to the server """
 
-        response = None
-        (resource, id) = self.parse_url(self.path)
-        response = self.get_all_or_single(resource, id)
+        parsed = self.parse_url(self.path)
+
+        if '?' not in self.path:
+            response = None
+            (resource, id) = parsed
+            response = self.get_all_or_single(resource, id)
+        else: # There is a ? in the path, run the query param functions
+            response = {}
+            (resource, query) = parsed
+
+            # see if the query dictionary has an email key
+            if query.get('email') and resource == 'customers':
+                self._set_headers(200)
+                response = get_customer_by_email(query['email'][0])
+
+            elif query.get('location_id') and resource == 'animals':
+                self._set_headers(200)
+                response = get_animal_by_location(query['location_id'][0])
+
+            elif query.get('location_id') and resource == 'employees':
+                self._set_headers(200)
+                response = get_employee_by_location(query['location_id'][0])
+
+            elif query.get('status') and resource == 'animals':
+                self._set_headers(200)
+                response = get_animal_by_status(query['status'][0])
+
         self.wfile.write(json.dumps(response).encode())
 
     def do_POST(self):
