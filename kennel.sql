@@ -88,5 +88,5 @@ SELECT
             JOIN Customer c
                 ON c.id = a.customer_id
 
-SELECT * FROM Animal
-ORDER BY id DESC;
+DELETE FROM Animal
+WHERE id IN (11, 12);
