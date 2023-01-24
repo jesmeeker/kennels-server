@@ -90,3 +90,13 @@ SELECT
 
 DELETE FROM Animal
 WHERE id IN (11, 12);
+
+SELECT
+COUNT(location_id) AS animals,
+    l.id,
+    l.name,
+    l.address
+FROM location l
+JOIN animal a
+    ON a.location_id = l.id
+GROUP BY l.id

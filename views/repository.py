@@ -2,64 +2,8 @@ import sqlite3
 import json
 from models import Animal, Customer, Employee, Location
 
-DATABASE = {
-    'animals':
-    [
-        {
-            "id": 1,
-            "name": "Snickers",
-            "species": "Dog",
-            "locationId": 1,
-            "customerId": 1,
-            "status": "Admitted"
-        },
-        {
-            "id": 2,
-            "name": "Roman",
-            "species": "Dog",
-            "locationId": 1,
-            "customerId": 1,
-            "status": "Admitted"
-        },
-        {
-            "id": 3,
-            "name": "Blue",
-            "species": "Cat",
-            "locationId": 2,
-            "customerId": 1,
-            "status": "Admitted"
-        }],
-    'customers': [
-        {
-            "id": 1,
-            "full_name": "Ryan Tanay",
-            "email": "ryan.tanay@gmail.com"
-        }
-    ],
-    'employees': [
-        {
-            "id": 1,
-            "name": "Jenna Solis",
-            "address": "20 Page Terrace",
-            "locationId": 3
-        }
-    ],
-    'locations': [
-        {
-            "id": 1,
-            "name": "Nashville North",
-            "address": "8422 Johnson Pike"
-        },
-        {
-            "id": 2,
-            "name": "Nashville South",
-            "address": "209 Emory Drive"
-        }
-    ]
-}
 
-
-def all(resource):
+def all(resource, query_params):
     # Open a connection to the database
     with sqlite3.connect("./kennel.sqlite3") as conn:
 
@@ -67,60 +11,187 @@ def all(resource):
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
+        sort_by = ""
+        where_clause = ""
+
+        
         # Write the SQL query to get the information you want
         if resource == 'animals':
-            db_cursor.execute("""
-            SELECT
-                a.id,
-                a.name,
-                a.breed,
-                a.status,
-                a.location_id,
-                a.customer_id,
-                l.name location_name,
-                l.address location_address,
-                c.name customer_name,
-                c.address customer_address,
-                c.email customer_email
-            FROM Animal a
-            JOIN Location l 
-                ON l.id = a.location_id
-            JOIN Customer c
-                ON c.id = a.customer_id
-            """)
+            if len(query_params) != 0:
+                param = query_params[0]
+                [qs_key, qs_value] = param.split("=")
+
+                sort_by = ""
+                where_clause = ""
+
+                if qs_key == "_sortBy":
+                    if qs_value == "location":
+                        # if qs_value == 'location':
+                        sort_by = " ORDER BY location_id"
+
+                    if qs_value == "status":
+                        sort_by = " ORDER BY status ASC"
+
+                elif qs_key == "location_id":
+                    where_clause = f"WHERE a.location_id = {qs_value}"
+
+                elif qs_key == "status":
+                    where_clause = f"WHERE a.status = '{qs_value}'"
+
+                sql_to_execute = f"""
+                    SELECT
+                        a.id,
+                        a.name,
+                        a.breed,
+                        a.status,
+                        a.location_id,
+                        a.customer_id,
+                        l.name location_name,
+                        l.address location_address,
+                        c.name customer_name,
+                        c.address customer_address,
+                        c.email customer_email
+                    FROM Animal a
+                    JOIN `Location` l
+                        ON l.id = a.location_id
+                    JOIN `Customer` c
+                        ON c.id = a.location_id
+                    {where_clause}
+                    {sort_by}"""
+
+                db_cursor.execute(sql_to_execute)
+
+                animals = []
+
+                # Convert rows of data into a Python list
+                dataset = db_cursor.fetchall()
+
+                # Iterate list of data returned from database
+                for row in dataset:
+
+                    # Create an animal instance from the current row.
+                    # Note that the database fields are specified in
+                    # exact order of the parameters defined in the
+                    # Animal class above.
+                    animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
+
+                    # Create a Location instance from the current row
+                    location = Location(
+                        row['location_id'], row['location_name'], row['location_address'])
+
+                    # Add the dictionary representation of the location to the animal
+                    animal.location = location.__dict__
+                    # Create a Location instance from the current row
+                    customer = Customer(
+                            row['customer_id'], row['customer_name'], row['customer_address'], row['customer_email'])
+
+                # Add the dictionary representation of the location to the animal
+                    animal.customer = customer.__dict__
+
+                    # Add the dictionary representation of the animal to the list
+                    animals.append(animal.__dict__)
+
+                return animals
+
+            
+                    # if qs_value == 'customer':
+                    #     sort_by = " ORDER BY customer_id"
+                    #     sql_to_execute = f"""
+                    #         SELECT
+                    #             a.id,
+                    #             a.name,
+                    #             a.breed,
+                    #             a.status,
+                    #             a.location_id,
+                    #             a.customer_id,
+                    #             c.name customer_name,
+                    #             c.address customer_address,
+                    #             c.email customer_email
+                    #         FROM Animal a
+                    #         JOIN `Customer` c
+                    #             ON c.id = a.location_id
+                    #         {sort_by}"""
+
+                    #     db_cursor.execute(sql_to_execute)
+
+                    #     animals = []
+
+                    #     # Convert rows of data into a Python list
+                    #     dataset = db_cursor.fetchall()
+
+                    #     # Iterate list of data returned from database
+                    #     for row in dataset:
+
+                    #         # Create an animal instance from the current row.
+                    #         # Note that the database fields are specified in
+                    #         # exact order of the parameters defined in the
+                    #         # Animal class above.
+                    #         animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
+
+                    #         # Create a Location instance from the current row
+                    #         customer = Customer(
+                    #             row['customer_id'], row['customer_name'], row['customer_address'], row['customer_email'])
+
+                    # # Add the dictionary representation of the location to the animal
+                    #         animal.customer = customer.__dict__
+                    #         # Add the dictionary representation of the animal to the list
+                    #         animals.append(animal.__dict__)
+
+                    #     return animals
+                
+            else:
+                db_cursor.execute("""
+                SELECT
+                    a.id,
+                    a.name,
+                    a.breed,
+                    a.status,
+                    a.location_id,
+                    a.customer_id,
+                    l.name location_name,
+                    l.address location_address,
+                    c.name customer_name,
+                    c.address customer_address,
+                    c.email customer_email
+                FROM Animal a
+                JOIN Location l 
+                    ON l.id = a.location_id
+                JOIN Customer c
+                    ON c.id = a.customer_id
+                """)
 
             # Initialize an empty list to hold all animal representations
-            animals = []
+                animals = []
 
-            # Convert rows of data into a Python list
-            dataset = db_cursor.fetchall()
+                # Convert rows of data into a Python list
+                dataset = db_cursor.fetchall()
 
-            # Iterate list of data returned from database
-            for row in dataset:
+                # Iterate list of data returned from database
+                for row in dataset:
 
-                # Create an animal instance from the current row.
-                # Note that the database fields are specified in
-                # exact order of the parameters defined in the
-                # Animal class above.
-                animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
+                    # Create an animal instance from the current row.
+                    # Note that the database fields are specified in
+                    # exact order of the parameters defined in the
+                    # Animal class above.
+                    animal = Animal(row['id'], row['name'], row['breed'], row['status'], row['location_id'], row['customer_id'])
 
-                # Create a Location instance from the current row
-                location = Location(
-                    row['id'], row['location_name'], row['location_address'])
+                    # Create a Location instance from the current row
+                    location = Location(
+                        row['location_id'], row['location_name'], row['location_address'])
 
-                # Add the dictionary representation of the location to the animal
-                animal.location = location.__dict__
+                    # Add the dictionary representation of the location to the animal
+                    animal.location = location.__dict__
 
-                # Create a Customer instance from the current row
-                customer = Customer(
-                    row['id'], row['customer_name'], row['customer_address'], row['customer_email'])
+                    # Create a Customer instance from the current row
+                    customer = Customer(
+                        row['customer_id'], row['customer_name'], row['customer_address'], row['customer_email'])
 
-                # Add the dictionary representation of the location to the animal
-                animal.customer = customer.__dict__
-                # Add the dictionary representation of the animal to the list
-                animals.append(animal.__dict__)
+                    # Add the dictionary representation of the location to the animal
+                    animal.customer = customer.__dict__
+                    # Add the dictionary representation of the animal to the list
+                    animals.append(animal.__dict__)
 
-            return animals
+                return animals
 
         if resource == 'customers':
             db_cursor.execute("""
@@ -196,10 +267,14 @@ def all(resource):
         if resource == 'locations':
             db_cursor.execute("""
             SELECT
-                a.id,
-                a.name,
-                a.address
-            FROM location a
+            COUNT(a.location_id) AS animals,
+                l.id,
+                l.name,
+                l.address
+            FROM location l
+            JOIN animal a
+                ON a.location_id = l.id
+            GROUP BY l.id
             """)
 
             # Initialize an empty list to hold all animal representations
@@ -211,20 +286,12 @@ def all(resource):
             # Iterate list of data returned from database
             for row in dataset:
 
-                # Create an animal instance from the current row.
-                # Note that the database fields are specified in
-                # exact order of the parameters defined in the
-                # Animal class above.
                 location = Location(row['id'], row['name'], row['address'])
+                location.animals = (row['animals'])
 
                 locations.append(location.__dict__)
 
             return locations
-
-# def all(resource):
-#     """For GET requests to collection"""
-#     return DATABASE[resource]
-
 
 def retrieve(resource, id):
     with sqlite3.connect("./kennel.sqlite3") as conn:
@@ -235,16 +302,25 @@ def retrieve(resource, id):
         # into the SQL statement.
         if resource == 'animals':
             db_cursor.execute("""
-            SELECT
-                a.id,
-                a.name,
-                a.breed,
-                a.status,
-                a.location_id,
-                a.customer_id
-            FROM animal a
-            WHERE a.id = ?
-            """, (id, ))
+                SELECT
+                    a.id,
+                    a.name,
+                    a.breed,
+                    a.status,
+                    a.location_id,
+                    a.customer_id,
+                    l.name location_name,
+                    l.address location_address,
+                    c.name customer_name,
+                    c.address customer_address,
+                    c.email customer_email
+                FROM Animal a
+                JOIN Location l 
+                    ON l.id = a.location_id
+                JOIN Customer c
+                    ON c.id = a.customer_id
+                WHERE a.id =?
+                """, (id, ))
 
             # Load the single result into memory
             data = db_cursor.fetchone()
@@ -253,6 +329,19 @@ def retrieve(resource, id):
             animal = Animal(data['id'], data['name'], data['breed'],
                             data['status'], data['location_id'],
                             data['customer_id'])
+
+            location = Location(
+                        data['location_id'], data['location_name'], data['location_address'])
+
+                    # Add the dictionary representation of the location to the animal
+            animal.location = location.__dict__
+
+                    # Create a Customer instance from the current row
+            customer = Customer(
+                data['customer_id'], data['customer_name'], data['customer_address'], data['customer_email'])
+
+            # Add the dictionary representation of the location to the animal
+            animal.customer = customer.__dict__
 
             return animal.__dict__
 

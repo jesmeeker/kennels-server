@@ -1,7 +1,6 @@
 from .location_requests import get_single_location
 from .customer_requests import get_single_customer
 
-
 ANIMALS = [
     {
         "id": 1,
